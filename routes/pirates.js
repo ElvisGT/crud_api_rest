@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const Pirates = require("../controllers/pirates");
+const {verifyJWT} = require("../middlewares/verifyJWT");
 
 const pirates = new Pirates();
 
@@ -9,7 +10,9 @@ router.get("/",pirates.getPirates)
 
 router.post("/",pirates.createPirates)
 
-router.put("/:id",pirates.updatePirates)
+router.put("/:id",[
+  verifyJWT
+],pirates.updatePirates)
 
 router.delete("/:id",pirates.deletePirates)
 

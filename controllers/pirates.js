@@ -1,49 +1,53 @@
-const fs = require('fs');
 const {request,response} = require("express");
+const bcryptjs = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { conection } = require("../database/config");
+const Pirate = require("../models/pirate");
 
 class Pirates {
   constructor(){
     this._piratesArr = [];
     this.path = './database/data.json';
     
-    this.getDB();
   }
 
-  getPirates = (req = request, res = response) => {
+  getPirates = async(req = request, res = response) => {
+
+    //Obtener de la BD
+    const pirates = await Pirate.find({});
+    
     res.json({
-      data: this._piratesArr,
+      pirates
     });
   };
 
   createPirates = (req = request, res = response) => {
-    const body = req.body;
-    this._piratesArr.push(body);
+    const {password,name} = req.body;
+    const pirate = new Pirate({name,password});
+
+    //Encriptar la contrasenia
+    const salt = bcryptjs.genSaltSync();
+    pirate.password = bcryptjs.hashSync(password,salt);
 
     //Save DB
-    this.saveDB();
+    pirate.save();
 
     res.json({
       msg: "Creado exitosamente",
     });
   };
 
-  updatePirates = (req = request, res = response) => {
-    const { id } = req.params;
-    const body = req.body;
+  updatePirates = async(req = request, res = response) => {
+    const {name,password} = req.body;
+    const id = req.uid;
 
-    //Algoritmo para buscar en el arreglo el id
-    const pirateId = this._piratesArr.findIndex( item => item.id === id);
-
-
-    if(pirateId !== -1){
-      this._piratesArr[pirateId] = body;
-      //Save DB
-      this.saveDB();
-    }
-
-    res.json({
-      msg: "Actualizado exitosamente",
-    });
+      //Actualizar en DB
+      await Pirate.findByIdAndUpdate(id, { name,password });
+      
+      res.json({
+        msg: "Actualizado exitosamente",
+      });
+     
   };
   
   deletePirates = (req = request, res = response) => {
@@ -57,7 +61,6 @@ class Pirates {
       const newArr = this._piratesArr.filter(item => item.id !== this._piratesArr[pirateId].id);
       this._piratesArr = newArr;
       
-      this.saveDB();
     }
 
     res.json({
@@ -65,20 +68,6 @@ class Pirates {
     });
   };
 
-  getDB(){
-    let data = [];
-
-    if(fs.existsSync(this.path)){
-       data = JSON.parse(fs.readFileSync(this.path));
-    }
-    
-    this._piratesArr = data;
-  }
-
-  saveDB(){
-    //Save DB
-    fs.writeFileSync(this.path,JSON.stringify(this._piratesArr));
-  }
 }
 
 module.exports = Pirates;

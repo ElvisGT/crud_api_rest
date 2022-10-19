@@ -1,6 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const pirates = require("../routes/pirates");
+const login = require("../routes/auth");
+
 
 
 class Server {
@@ -19,7 +21,8 @@ class Server {
   }
 
   router(){
-    this.app.use(this.piratesPath,pirates)
+    this.app.use(this.piratesPath,pirates);
+    this.app.use(this.piratesPath,login);
 
   }
 
